@@ -103,6 +103,10 @@ def main():
     # create a database connection
     db =  Database(database)
 
+
+    # db.insert_user('erik','linstead@chapman.edu')
+    # db.insert_user('tommy','springer@chapman.edu')
+    # db.insert_user('kurz','kurz@chapman.edu')
     #action buttons..
     #populate the entire users table--populate list 2
     def populate_list(query='select * from users'):
@@ -137,7 +141,7 @@ def main():
         populate_list()
     #update a user
     def update_user():
-        db.update(selected_item[0],username_text.get(),email_text.get())
+        db.update_user(selected_item[0],username_text.get(),email_text.get())
         populate_list()
     #clear text when user is deleted
     def clear_text():
@@ -226,12 +230,6 @@ def main():
     # Start program
     app.mainloop()
 
-    # db.insert_user('gabby','gabrielapintogp@gmail.com')
-    # db.update_user(1,'gabby','pinto@chapman.edu')
-    # db.insert_user('erik','linstead@chapman.edu')
-    # db.insert_user('tommy','springer@chapman.edu')
-    # db.insert_user('kurz','kurz@chapman.edu')
-    # db.delete_user(1)
 
     # db.search_by_query("select * from users where email like '% @chapman.edu'; ")
     db.search_by_query("select * from users where email like '%.edu'; ")
