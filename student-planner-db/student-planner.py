@@ -93,13 +93,29 @@ class Database:
                          (name,email,user_id))
         self.conn.commit()
 
+
+    def insert_task(self, text, priority,userid,courseid,assignmentid,examid,projectid):
+        self.cur.execute("INSERT INTO tasks VALUES (NULL, ?, ?, ?, ?, ?, ?,?)",
+                         (text, priority,userid,courseid,assignmentid,examid,projectid))
+        self.conn.commit()
+
+    def delete_task(self, task_id):
+        self.cur.execute("DELETE FROM tasks WHERE task_id=?", (task_id,))
+        self.conn.commit()
+
+    def update_task(self, task_id,task_name, priority,userid,courseid,assignmentid,examid,projectid):
+        self.cur.execute("UPDATE tasks SET task_name = ?, priority = ?, userid = ?, courseid=?,assignmentid = ?, examid = ?, projectid = ? WHERE task_id = ?",
+                         (task_name, priority,userid,courseid,assignmentid,examid,projectid,task_id))
+        self.conn.commit()
+
     def __del__(self):
         self.conn.close()
 
 
 
 def main():
-    database = r"/Users/gabbypinto/Desktop/student-planner-db/pinto_schema.db"
+    # database = r"/Users/gabbypinto/Desktop/student-planner-db/pinto_schema.db"
+    database = "pinto_schema.db"
     # create a database connection
     db =  Database(database)
 
@@ -109,7 +125,7 @@ def main():
     # db.insert_user('kurz','kurz@chapman.edu')
     #action buttons..
     #populate the entire users table--populate list 2
-    def populate_list(query='select * from users'):
+    def populate_users_list(query='select * from users'):
         for i in users_tree_view.get_children():
             users_tree_view.delete(i)
         for row in db.search_by_query(query):
@@ -121,7 +137,7 @@ def main():
             return
         db.insert_user(username_text.get(),email_text.get())
         clear_text()
-        populate_list()
+        populate_users_list()
     #select a user --select_router
     def select_user(event):
         try:
@@ -138,11 +154,11 @@ def main():
     def remove_user():
         db.delete_user(selected_item[0])
         clear_text()
-        populate_list()
+        populate_users_list()
     #update a user
     def update_user():
         db.update_user(selected_item[0],username_text.get(),email_text.get())
-        populate_list()
+        populate_users_list()
     #clear text when user is deleted
     def clear_text():
         username_entry.delete(0,END)
@@ -150,19 +166,75 @@ def main():
     #execute the query which calls the first fxn (populate list 2)...execute_query
     def execute_query():
         query = query_search.get()
-        populate_list(query)
+        populate_users_list(query)
 
+
+    def populate_tasks_list(query='select * from tasks'):
+        for i in tasks_tree_view.get_children():
+            tasks_tree_view.delete(i)
+        for row in db.search_by_query(query):
+            tasks_tree_view.insert('','end',values=row)
+    #add a user  -- add router
+    def add_task():
+        if task_text.get() == '' or task_priority.get() == '' or task_userid.get() == '' or task_assignmentid.get() == '' or task_examid.get() == '' or task_projectid.get() == '':
+            messagebox.showerror('Required Fields','Please include all fields')
+            return
+        db.insert_task(task_text.get(), task_priority.get(),task_userid.get(),task_courseid.get(),task_assignmentid.get(),task_examid.get(),task_projectid.get())
+        clear_text()
+        populate_tasks_list()
+    #select a user --select_router
+    def select_task(event):
+        try:
+            global selected_item
+            index = tasks_tree_view.selection()[0]
+            selected_item = tasks_tree_view.item(index)['values']
+            task_entry.delete(0,END)
+            task_entry.insert(END,selected_item[1])
+            task_priority_entry.delete(0,END)
+            task_priority_entry.insert(END,selected_item[2])
+            task_userid_entry.delete(0,END)
+            task_userid_entry.insert(END,selected_item[3])
+            task_assignmentid_entry.delete(0,END)
+            task_assignmentid_entry.insert(END,selected_item[4])
+            task_examid_entry.delete(0,END)
+            task_examid_entry.insert(END,selected_item[5])
+            task_projectid_entry.delete(0,END)
+            task_projectid_entry.insert(END,selected_item[6])
+        except IndexError:
+            pass
+    #remove a user
+    def remove_task():
+        db.delete_task(selected_item[0])
+        clear_tasks_text()
+        populate_tasks_list()
+    #update a user
+    def update_task():
+        db.update_task(selected_item[0],task_text.get(), task_priority.get(),task_userid.get(),task_courseid.get(),task_assignmentid.get(),task_examid.get(),task_projectid.get())
+        populate_tasks_list()
+    #clear text when user is deleted
+    def clear_tasks_text():
+        task_entry.delete(0,END)
+        task_priority_entry.delete(0,END)
+        task_userid_entry.delete(0,END)
+        task_assignmentid_entry.delete(0,END)
+        task_examid_entry.delete(0,END)
+        task_projectid_entry.delete(0,END)
 
     app = Tk()
-
-    frame_search = Frame(app)
     #search by query grid
+    frame_search = Frame(app)
     frame_search.grid(row=0,column=0)
     lbl_search = Label(frame_search,text='Search by query',font=('bold',12),pady=20)
     lbl_search.grid(row=0,column=0,sticky=W)
     query_search = StringVar()
     query_search_entry= Entry(frame_search,textvariable=query_search,width=40)
     query_search_entry.grid(row=0,column=1)
+
+    # scrollbarApp = Scrollbar(app,orient='vertical')
+    # scrollbarApp_tree_view = Treeview(app)
+    # scrollbarApp.configure(command=scrollbarApp_tree_view.yview)
+    # scrollbarApp.pack(side="right",fill="y")
+    # scrollbarApp_tree_view.config(yscrollcommand=scrollbarApp.set)
 
     #fields/attributes for the users table
     frame_fields = Frame(app)
@@ -197,36 +269,109 @@ def main():
     scrollbar.pack(side="right",fill="y")
     users_tree_view.config(yscrollcommand=scrollbar.set)
 
-
     #action buttons
     frame_btns = Frame(app)
     frame_btns.grid(row=3,column=0)
-
     #add buttons
     add_btn = Button(frame_btns,text='Add User',width=12,command=add_user)
     add_btn.grid(row=0,column=0,pady=20)
-
     #remove button
     remove_btn = Button(frame_btns,text='Remove User',width=12,command=remove_user)
     remove_btn.grid(row=0,column=1)
-
     #update button
     update_btn = Button(frame_btns,text='Update User',width=12,command=update_user)
     update_btn.grid(row=0,column=2)
-
     #clear button
     clear_btn = Button(frame_btns,text='Clear Input',width=12,command=clear_text)
     clear_btn.grid(row=0,column=3)
-
     #search button
     search_query_btn = Button(frame_search,text='Search Query',width=12,command=execute_query)
     search_query_btn.grid(row=0,column=2)
+
+
+    #fields/attributes for the users table
+    frame_field2 = Frame(app)
+    frame_field2.grid(row=40,column=0)
+    #task
+    task_text = StringVar()
+    task_label = Label(frame_field2,text='task name',font=('bold',12))
+    task_label.grid(row=40,column=0,sticky=E)
+    task_entry = Entry(frame_field2, textvariable=task_text)
+    task_entry.grid(row=40,column=1,sticky=W)
+    #priority
+    task_priority = IntVar()
+    task_priority_label = Label(frame_field2,text='priority',font=('bold',12))
+    task_priority_label.grid(row=40,column=2,sticky=E)
+    task_priority_entry = Entry(frame_field2, textvariable=task_priority)
+    task_priority_entry.grid(row=40,column=3,sticky=W)
+    #userid
+    task_userid = IntVar()
+    task_userid_label = Label(frame_field2,text='userid',font=('bold',12))
+    task_userid_label.grid(row=41,column=0,sticky=E)
+    task_userid_entry = Entry(frame_field2, textvariable=task_userid)
+    task_userid_entry.grid(row=41,column=1,sticky=W)
+    #courseid
+    task_courseid = IntVar()
+    task_courseid_label = Label(frame_field2,text='courseid',font=('bold',12))
+    task_courseid_label.grid(row=41,column=2,sticky=E)
+    task_courseid_entry = Entry(frame_field2, textvariable=task_courseid)
+    task_courseid_entry.grid(row=41,column=3,sticky=W)
+    #assignmentid
+    task_assignmentid = IntVar()
+    task_assignmentid_label = Label(frame_field2,text='assignmentid',font=('bold',12))
+    task_assignmentid_label.grid(row=42,column=0,sticky=E)
+    task_assignmentid_entry = Entry(frame_field2, textvariable=task_assignmentid)
+    task_assignmentid_entry.grid(row=42,column=1,sticky=W)
+    #examid
+    task_examid = IntVar()
+    task_examid_label = Label(frame_field2,text='examid',font=('bold',12))
+    task_examid_label.grid(row=42,column=2,sticky=E)
+    task_examid_entry = Entry(frame_field2, textvariable=task_examid)
+    task_examid_entry.grid(row=42,column=3,sticky=W)
+    #projectid
+    task_projectid = IntVar()
+    task_projectid_label = Label(frame_field2,text='projectid',font=('bold',12))
+    task_projectid_label.grid(row=43,column=0,sticky=E)
+    task_projectid_entry = Entry(frame_field2, textvariable=task_projectid)
+    task_projectid_entry.grid(row=43,column=1,sticky=W)
+
+    #tasks table frame
+    frame_tasks = Frame(app)
+    frame_tasks.grid(row=45,column=0,columnspan=4,rowspan=6,pady=20,padx=20)
+    tasks_columns = ['task_id','task_name','priority','userid','courseid','assignmentid','examid','projectid']
+    tasks_tree_view = Treeview(frame_tasks,columns=tasks_columns,show="headings")
+    tasks_tree_view.column("task_id",width=30)
+    for col in tasks_columns[1:]:
+        tasks_tree_view.column(col,width=200)
+        tasks_tree_view.heading(col,text=col)
+    tasks_tree_view.bind('<<TreeviewSelect>>',select_task)  #create select user!
+    tasks_tree_view.pack(side="left",fill="y")
+    scrollbar = Scrollbar(frame_tasks,orient='vertical')
+    scrollbar.configure(command=tasks_tree_view.yview)
+    scrollbar.pack(side="right",fill="y")
+    tasks_tree_view.config(yscrollcommand=scrollbar.set)
+
+    #tasks action buttons
+    frame_tasks_btns = Frame(app)
+    frame_tasks_btns.grid(row=50,column=0)
+    #add buttons
+    add_tasks_btn = Button(frame_tasks_btns,text='Add Task',width=12,command=add_task)
+    add_tasks_btn.grid(row=60,column=0,pady=20)
+    #remove button
+    remove_tasks_btn = Button(frame_tasks_btns,text='Remove Task',width=12,command=remove_task)
+    remove_tasks_btn.grid(row=60,column=1)
+    #update button
+    update_tasks_btn = Button(frame_btns,text='Update Task',width=12,command=update_task)
+    update_tasks_btn.grid(row=60,column=2)
+    #clear button
+    clear_tasks_btn = Button(frame_btns,text='Clear Input',width=12,command=clear_text)
+    clear_tasks_btn.grid(row=60,column=3)
 
     app.title('Student Planner')
     app.geometry('900x750')
 
     #Populate user data
-    populate_list()
+    populate_users_list()
     # Start program
     app.mainloop()
 
