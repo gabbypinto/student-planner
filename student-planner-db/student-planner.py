@@ -125,12 +125,12 @@ class Database:
                             (exam_name, exam_date,courseid))
         self.conn.commit()
 
-    def delete_exam(self, assignment_id):
+    def delete_exam(self, exam_id):
         self.cur.execute("DELETE FROM exams WHERE exam_id=?", (exam_id,))
         self.conn.commit()
 
     def update_exam(self,exam_id,exam_name, exam_date,courseid):
-        self.cur.execute("UPDATE exams SET exam_name = ?, exam_date = ?, course=? WHERE exam_id = ?",
+        self.cur.execute("UPDATE exams SET exam_name = ?, exam_date = ?, courseid=? WHERE exam_id = ?",
                              (exam_name, exam_date,courseid,exam_id))
         self.conn.commit()
 
@@ -146,7 +146,7 @@ class Database:
         self.conn.commit()
 
     def update_project(self,project_id,project_name, start_date,end_date,length,courseid):
-        self.cur.execute("UPDATE projects SET project_name = ?, start_date = ?, end_date=?, length=?,courseid=? WHERE projectid = ?",
+        self.cur.execute("UPDATE projects SET project_name = ?, start_date = ?, end_date=?, length=?,courseid=? WHERE project_id = ?",
                              (project_name, start_date,end_date,length,courseid,project_id))
         self.conn.commit()
 
@@ -167,28 +167,22 @@ class Database:
         self.conn.commit()
 
 
-
     def __del__(self):
         self.conn.close()
 
 
 def main():
-
     # database = r"/Users/gabbypinto/Desktop/student-planner-db/pinto_schema.db"
     database = "pinto_schema.db"
     # create a database connection
     db =  Database(database)
-    # db.insert_user('erik','linstead@chapman.edu')
-    # db.insert_user('tommy','springer@chapman.edu')
-    # db.insert_user('kurz','kurz@chapman.edu')
-    #action buttons..
-    #populate the entire users table--populate list 2
+    #populate the entire users table
     def populate_users_list(query='select * from users'):
         for i in users_tree_view.get_children():
             users_tree_view.delete(i)
         for row in db.search_by_query(query):
             users_tree_view.insert('','end',values=row)
-    #add a user  -- add router
+    #add a user
     def add_user():
         if username_text.get() == '' or email_text.get() == '':
             messagebox.showerror('Required Fields','Please include all fields')
@@ -196,7 +190,7 @@ def main():
         db.insert_user(username_text.get(),email_text.get())
         clear_text()
         populate_users_list()
-    #select a user --select_router
+    #select a user
     def select_user(event):
         try:
             global selected_item
@@ -244,43 +238,45 @@ def main():
     #select a task
     def select_task(event):
         try:
-            global selected_item
+            global selected_task
             index = tasks_tree_view.selection()[0]
-            selected_item = tasks_tree_view.item(index)['values']
+            selected_task = tasks_tree_view.item(index)['values']
             task_entry.delete(0,END)
-            task_entry.insert(END,selected_item[1])
+            task_entry.insert(END,selected_task[1])
             task_priority_entry.delete(0,END)
-            task_priority_entry.insert(END,selected_item[2])
+            task_priority_entry.insert(END,selected_task[2])
             task_userid_entry.delete(0,END)
-            task_userid_entry.insert(END,selected_item[3])
+            task_userid_entry.insert(END,selected_task[3])
             task_assignmentid_entry.delete(0,END)
-            task_assignmentid_entry.insert(END,selected_item[4])
+            task_assignmentid_entry.insert(END,selected_task[4])
             task_examid_entry.delete(0,END)
-            task_examid_entry.insert(END,selected_item[5])
+            task_examid_entry.insert(END,selected_task[5])
             task_projectid_entry.delete(0,END)
-            task_projectid_entry.insert(END,selected_item[6])
+            task_projectid_entry.insert(END,selected_task[6])
         except IndexError:
             pass
     #remove a task
     def remove_task():
-        db.delete_task(selected_item[0])
+        db.delete_task(selected_task[0])
         clear_tasks_text()
         populate_tasks_list()
     #update a task
     def update_task():
-        db.update_task(selected_item[0],task_text.get(), task_priority.get(),task_userid.get(),task_courseid.get(),task_assignmentid.get(),task_examid.get(),task_projectid.get())
+        db.update_task(selected_task[0],task_text.get(), task_priority.get(),task_userid.get(),task_courseid.get(),task_assignmentid.get(),task_examid.get(),task_projectid.get())
         populate_tasks_list()
     #clear text when user is deleted
     def clear_tasks_text():
         task_entry.delete(0,END)
         task_priority_entry.delete(0,END)
         task_userid_entry.delete(0,END)
+        task_courseid_entry.delete(0,END)
         task_assignmentid_entry.delete(0,END)
         task_examid_entry.delete(0,END)
         task_projectid_entry.delete(0,END)
 
+#----------------------------------------------------------------------------------------------------------------
 
-    #add a task
+    #add an assignment
     def add_assignment():
         if assignment_text.get() == '' or assignment_start_text.get() == '' or assignment_end_text.get() == '' or assignment_length_text.get() == '':
             messagebox.showerror('Required Fields','Please include all fields')
@@ -340,8 +336,8 @@ def main():
     def select_exam(event):
         try:
             global selected_exam
-            index = exams_trees_view.selection()[0]
-            selected_exam = assignments_tree_view.item(index)['values']
+            index = exams_tree_view.selection()[0]
+            selected_exam = exams_tree_view.item(index)['values']
             exam_entry.delete(0,END)
             exam_entry.insert(END,selected_exam[1])
             exam_date_entry.delete(0,END)
@@ -354,7 +350,7 @@ def main():
     def remove_exam():
         db.delete_exam(selected_exam[0])
         clear_exams_text()
-        populate_assignments_list()
+        populate_exams_list()
     #update exam
     def update_exam():
         db.update_exam(selected_exam[0],exam_text.get(), exam_date_text.get(),courseid_text.get())
@@ -386,25 +382,29 @@ def main():
     def select_project(event):
         try:
             global selected_project
-            index = projects_trees_view.selection()[0]
-            selected_exam = assignments_tree_view.item(index)['values']
-            exam_entry.delete(0,END)
-            exam_entry.insert(END,selected_exam[1])
-            exam_date_entry.delete(0,END)
-            exam_date_entry.insert(END,selected_exam[2])
-            courseid_entry.delete(0,END)
-            courseid_entry.insert(END,selected_exam[3])
+            index = projects_tree_view.selection()[0]
+            selected_project = projects_tree_view.item(index)['values']
+            project_entry.delete(0,END)
+            project_entry.insert(END,selected_project[1])
+            project_start_date_entry.delete(0,END)
+            project_start_date_entry.insert(END,selected_project[2])
+            project_end_date_entry.delete(0,END)
+            project_end_date_entry.insert(END,selected_project[3])
+            project_length_entry.delete(0,END)
+            project_length_entry.insert(END,selected_project[4])
+            project_courseid_entry.delete(0,END)
+            project_courseid_entry.insert(END,selected_project[4])
         except IndexError:
             pass
     #remove exam
     def remove_project():
-        db.delete_exam(selected_exam[0])
-        clear_exams_text()
-        populate_assignments_list()
+        db.delete_project(selected_project[0])
+        clear_projects_text()
+        populate_projects_list()
     #update exam
     def update_project():
-        db.update_exam(selected_exam[0],exam_text.get(), exam_date_text.get(),courseid_text.get())
-        populate_exams_list()
+        db.update_project(selected_project[0],project_text.get(),project_start_date_text.get(),project_end_date_text.get(),project_length_text.get(),project_courseid_text.get())
+        populate_projects_list()
     #clear text when user is deleted
     def clear_projects_text():
         project_entry.delete(0,END)
@@ -413,7 +413,7 @@ def main():
         project_length_entry.delete(0,END)
         project_courseid_entry.delete(0,END)
     #populate exams
-    def populate_exams_list(query='select * from projects'):
+    def populate_projects_list(query='select * from projects'):
         for i in projects_tree_view.get_children():
             projects_tree_view.delete(i)
         for row in db.search_by_query(query):
@@ -513,6 +513,10 @@ def main():
     query_search = StringVar()
     query_search_entry= Entry(second_frame,textvariable=query_search,width=40)
     query_search_entry.pack(side="left")
+    #search button
+    search_query_btn = Button(second_frame,text='Search Query',width=12,command=execute_query)
+    search_query_btn.pack(side="left")
+
 
     #create another frame in Canvas
     third_frame = Frame(my_canvas)
@@ -546,9 +550,6 @@ def main():
     #clear button
     clear_btn = Button(fourth_frame,text='Clear Input',width=12,command=clear_text)
     clear_btn.pack(side="left")
-    #search button
-    search_query_btn = Button(fourth_frame,text='Search Query',width=12,command=execute_query)
-    search_query_btn.pack(side="left")
 
     fifth_frame = Frame(my_canvas)
     my_canvas.create_window(0,200,window=fifth_frame)
@@ -631,13 +632,12 @@ def main():
     update_tasks_btn = Button(eight_frame,text='Update Task',width=12,command=update_task)
     update_tasks_btn.pack(side="left")
     #clear button
-    clear_tasks_btn = Button(eight_frame,text='Clear Input',width=12,command=clear_text)
+    clear_tasks_btn = Button(eight_frame,text='Clear Input',width=12,command=clear_tasks_text)
     clear_tasks_btn.pack(side="left")
 
     #tasks table frame
     nine_frame = Frame(my_canvas)
     my_canvas.create_window(0,700,window=nine_frame)
-    # frame_tasks.grid(row=45,column=0,columnspan=4,rowspan=6,pady=20,padx=20)
     tasks_columns = ['task_id','task_name','priority','userid','courseid','assignmentid','examid','projectid']
     tasks_tree_view = Treeview(nine_frame,columns=tasks_columns,show="headings")
     tasks_tree_view.column("task_id",width=30)
@@ -674,7 +674,7 @@ def main():
     assignment_end_label.pack(side="left")
     assignment_end_entry = Entry(ten_frame, textvariable=assignment_end_text)
     assignment_end_entry.pack(side="left")
-#length
+    #length
     assignment_length_text = IntVar()
     assignment_length_label = Label(ten_frame,text='length',font=('bold',12))
     assignment_length_label.pack(side="left")
@@ -694,7 +694,7 @@ def main():
     update_assignment_btn = Button(assignment_btn_frame,text='Update Assignment',width=16,command=update_assignment)
     update_assignment_btn.pack(side="left")
     #clear button
-    clear_assignment_btn = Button(assignment_btn_frame,text='Clear Input',width=12,command=clear_text)
+    clear_assignment_btn = Button(assignment_btn_frame,text='Clear Input',width=12,command=clear_assignments_text)
     clear_assignment_btn.pack(side="left")
 
     #assignments table frame
@@ -786,7 +786,7 @@ def main():
     project_start_date_entry = Entry(projects_frame, textvariable=project_start_date_text)
     project_start_date_entry.pack(side="left")
     #end date
-    project_end_date_text = IntVar()
+    project_end_date_text = StringVar()
     project_end_date_label = Label(projects_frame,text='end date',font=('bold',12))
     project_end_date_label.pack(side="left")
     project_end_date_entry = Entry(projects_frame, textvariable=project_end_date_text)
@@ -869,7 +869,7 @@ def main():
     courses_two_frame = Frame(my_canvas)
     my_canvas.create_window(0,1930,window=courses_two_frame)
     #length
-    course_length_text = IntVar()
+    course_length_text = DoubleVar()
     course_length_label = Label(courses_two_frame,text='length',font=('bold',12))
     course_length_label.pack(side="left")
     course_length_entry = Entry(courses_two_frame, textvariable=course_length_text)
@@ -926,6 +926,7 @@ def main():
     populate_users_list()
     populate_tasks_list()
     populate_assignments_list()
+    populate_projects_list()
     populate_exams_list()
     populate_courses_list()
 
