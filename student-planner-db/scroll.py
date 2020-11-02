@@ -4,7 +4,7 @@ from sqlite3 import Error
 
 from tkinter import *
 from tkinter.ttk import Treeview
-
+from tkinter import ttk
 
 
 class Database:
@@ -72,7 +72,6 @@ class Database:
                                     );""")
         self.conn.commit()
 
-
     def search_by_query(self, query):
         self.cur.execute(query)
         rows = self.cur.fetchall()
@@ -93,7 +92,6 @@ class Database:
                          (name,email,user_id))
         self.conn.commit()
 
-
     def insert_task(self, text, priority,userid,courseid,assignmentid,examid,projectid):
         self.cur.execute("INSERT INTO tasks VALUES (NULL, ?, ?, ?, ?, ?, ?,?)",
                          (text, priority,userid,courseid,assignmentid,examid,projectid))
@@ -108,10 +106,10 @@ class Database:
                          (task_name, priority,userid,courseid,assignmentid,examid,projectid,task_id))
         self.conn.commit()
 
-    #assignment
+    #add code here for assignment
     def insert_assignment(self, assignment_name, start_date,end_date,length):
         self.cur.execute("INSERT INTO tasks VALUES (NULL, ?, ?, ?, ?)",
-                            (text, priority,userid,courseid,assignmentid,examid,projectid))
+                            (assignment_name, start_date,end_date,length))
         self.conn.commit()
 
     def delete_assignment(self, assignment_id):
@@ -120,22 +118,17 @@ class Database:
 
     def update_assignment(self, assignment_id,assignment_name, start_date,end_date,length):
         self.cur.execute("UPDATE assignments SET assignment_name = ?, start_date = ?, end_date = ?, length=? WHERE assignment_id = ?",
-                             (task_name, priority,userid,courseid,assignmentid,examid,projectid,task_id))
+                             (assignment_id,assignment_name, start_date,end_date,length))
         self.conn.commit()
-
-
 
     def __del__(self):
         self.conn.close()
-
 
 def main():
     # database = r"/Users/gabbypinto/Desktop/student-planner-db/pinto_schema.db"
     database = "pinto_schema.db"
     # create a database connection
     db =  Database(database)
-
-
     # db.insert_user('erik','linstead@chapman.edu')
     # db.insert_user('tommy','springer@chapman.edu')
     # db.insert_user('kurz','kurz@chapman.edu')
@@ -183,14 +176,13 @@ def main():
     def execute_query():
         query = query_search.get()
         populate_users_list(query)
-
-
+    #populate tasks list
     def populate_tasks_list(query='select * from tasks'):
         for i in tasks_tree_view.get_children():
             tasks_tree_view.delete(i)
         for row in db.search_by_query(query):
             tasks_tree_view.insert('','end',values=row)
-    #add a user  -- add router
+    #add a task
     def add_task():
         if task_text.get() == '' or task_priority.get() == '' or task_userid.get() == '' or task_assignmentid.get() == '' or task_examid.get() == '' or task_projectid.get() == '':
             messagebox.showerror('Required Fields','Please include all fields')
@@ -198,7 +190,7 @@ def main():
         db.insert_task(task_text.get(), task_priority.get(),task_userid.get(),task_courseid.get(),task_assignmentid.get(),task_examid.get(),task_projectid.get())
         clear_text()
         populate_tasks_list()
-    #select a user --select_router
+    #select a task
     def select_task(event):
         try:
             global selected_item
@@ -269,40 +261,84 @@ def main():
         assignment_end_entry.delete(0,END)
         assignment_length_entry.delete(0,END)
 
+    def populate_assignments_list(query='select * from assignments'):
+        for i in assignments_tree_view.get_children():
+            assignments_tree_view.delete(i)
+        for row in db.search_by_query(query):
+            assignments_tree_view.insert('','end',values=row)
+
+
 
     app = Tk()
+    #main frame
+    main_frame  = Frame(app)
+    main_frame.pack(fill=BOTH,expand=1)
+
+    #create canvas
+    my_canvas= Canvas(main_frame)
+    my_canvas.pack(side=LEFT,fill=BOTH,expand=1)
+
+    #add scrollbar
+    my_scrollbar=ttk.Scrollbar(main_frame,orient=VERTICAL,command=my_canvas.yview)
+    my_scrollbar.pack(side=RIGHT,fill=Y)
+
+    #configure the Canvas
+    my_canvas.configure(yscrollcommand=my_scrollbar.set)
+    my_canvas.bind('<Configure>',lambda e:mmy_canvas.configure(scrollregion=my_canvas.bbbox("all")))
+
+    #create another frame in Canvas
+    second_frame = Frame(my_canvas)
+    my_canvas.create_window((0,0),window=second_frame,anchor="nw")
 
 
-    #search by query grid
+    #search by QUERY FRAME
     frame_search = Frame(app)
-    frame_search.grid(row=0,column=0)
+    frame_search.pack()
+
     lbl_search = Label(frame_search,text='Search by query',font=('bold',12),pady=20)
-    lbl_search.grid(row=0,column=0,sticky=W)
+    lbl_search.pack(side="left")
     query_search = StringVar()
     query_search_entry= Entry(frame_search,textvariable=query_search,width=40)
-    query_search_entry.grid(row=0,column=1)
+    query_search_entry.pack(side="left")
 
-    #fields/attributes for the users table
+    # #fields/attributes for the users table
     frame_fields = Frame(app)
-    frame_fields.grid(row=1,column=0)
-    #name
+    frame_fields.pack()
+    # #name
     username_text = StringVar()
     username_label = Label(frame_fields,text='name',font=('bold',12))
-    username_label.grid(row=0,column=0,sticky=E)
+    username_label.pack(side="left")
     username_entry = Entry(frame_fields, textvariable=username_text)
-    username_entry.grid(row=0,column=1,sticky=W)
+    username_entry.pack(side="left")
     #email
     email_text = StringVar()
     email_label = Label(frame_fields,text='email',font=('bold',12))
-    email_label.grid(row=0,column=2,sticky=E)
+    email_label.pack(side="left")
     email_entry = Entry(frame_fields, textvariable=email_text)
-    email_entry.grid(row=0,column=3,sticky=W)
+    email_entry.pack(side="left")
 
-
+    #action buttons
+    frame_btns = Frame(app)
+    frame_btns.pack()
+    #add buttons
+    add_btn = Button(frame_btns,text='Add User',width=12,command=add_user)
+    add_btn.pack(side="left")
+    #remove button
+    remove_btn = Button(frame_btns,text='Remove User',width=12,command=remove_user)
+    remove_btn.pack(side="left")
+    #update button
+    update_btn = Button(frame_btns,text='Update User',width=12,command=update_user)
+    update_btn.pack(side="left")
+    #clear button
+    clear_btn = Button(frame_btns,text='Clear Input',width=12,command=clear_text)
+    clear_btn.pack(side="left")
+    #search button
+    search_query_btn = Button(frame_search,text='Search Query',width=12,command=execute_query)
+    search_query_btn.pack(side="left")
 
     #users table frame
     frame_users = Frame(app)
-    frame_users.grid(row=4,column=0,columnspan=4,rowspan=6,pady=20,padx=20)
+    frame_users.pack()
     columns = ['id','name','email']
     users_tree_view = Treeview(frame_users,columns=columns,show="headings")
     users_tree_view.column("id",width=30)
@@ -316,75 +352,80 @@ def main():
     scrollbar.pack(side="right",fill="y")
     users_tree_view.config(yscrollcommand=scrollbar.set)
 
-    #action buttons
-    frame_btns = Frame(app)
-    frame_btns.grid(row=3,column=0)
-    #add buttons
-    add_btn = Button(frame_btns,text='Add User',width=12,command=add_user)
-    add_btn.grid(row=0,column=0,pady=20)
-    #remove button
-    remove_btn = Button(frame_btns,text='Remove User',width=12,command=remove_user)
-    remove_btn.grid(row=0,column=1)
-    #update button
-    update_btn = Button(frame_btns,text='Update User',width=12,command=update_user)
-    update_btn.grid(row=0,column=2)
-    #clear button
-    clear_btn = Button(frame_btns,text='Clear Input',width=12,command=clear_text)
-    clear_btn.grid(row=0,column=3)
-    #search button
-    search_query_btn = Button(frame_search,text='Search Query',width=12,command=execute_query)
-    search_query_btn.grid(row=0,column=2)
-#----------------------------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------
 
     #fields/attributes for the tasks table
     frame_field2 = Frame(app)
-    frame_field2.grid(row=41,column=0)
+    frame_field2.pack()
     #task
     task_text = StringVar()
     task_label = Label(frame_field2,text='task name',font=('bold',12))
-    task_label.grid(row=0,column=0,sticky=E)
+    task_label.pack(side="left")
     task_entry = Entry(frame_field2, textvariable=task_text)
-    task_entry.grid(row=0,column=1,sticky=W)
+    task_entry.pack(side="left")
     #priority
     task_priority = IntVar()
     task_priority_label = Label(frame_field2,text='priority',font=('bold',12))
-    task_priority_label.grid(row=0,column=2,sticky=E)
+    task_priority_label.pack(side="left")
     task_priority_entry = Entry(frame_field2, textvariable=task_priority)
-    task_priority_entry.grid(row=0,column=3,sticky=W)
+    task_priority_entry.pack(side="left")
     #userid
     task_userid = IntVar()
     task_userid_label = Label(frame_field2,text='userid',font=('bold',12))
-    task_userid_label.grid(row=0,column=4,sticky=E)
+    task_userid_label.pack(side="left")
     task_userid_entry = Entry(frame_field2, textvariable=task_userid)
-    task_userid_entry.grid(row=0,column=5,sticky=W)
+    task_userid_entry.pack(side="left")
     #courseid
     task_courseid = IntVar()
     task_courseid_label = Label(frame_field2,text='courseid',font=('bold',12))
-    task_courseid_label.grid(row=1,column=0,sticky=E)
+    task_courseid_label.pack(side="left")
     task_courseid_entry = Entry(frame_field2, textvariable=task_courseid)
-    task_courseid_entry.grid(row=1,column=1,sticky=W)
+    task_courseid_entry.pack(side="left")
+
+    frame_field_tasks = Frame(app)
+    frame_field_tasks.pack()
     #assignmentid
     task_assignmentid = IntVar()
-    task_assignmentid_label = Label(frame_field2,text='assignmentid',font=('bold',12))
-    task_assignmentid_label.grid(row=1,column=2,sticky=E)
-    task_assignmentid_entry = Entry(frame_field2, textvariable=task_assignmentid)
-    task_assignmentid_entry.grid(row=1,column=3,sticky=W)
+    task_assignmentid_label = Label(frame_field_tasks,text='assignmentid',font=('bold',12))
+    task_assignmentid_label.pack(side="left")
+    task_assignmentid_entry = Entry(frame_field_tasks, textvariable=task_assignmentid)
+    task_assignmentid_entry.pack(side="left")
     #examid
     task_examid = IntVar()
-    task_examid_label = Label(frame_field2,text='examid',font=('bold',12))
-    task_examid_label.grid(row=1,column=4,sticky=E)
-    task_examid_entry = Entry(frame_field2, textvariable=task_examid)
-    task_examid_entry.grid(row=1,column=5,sticky=W)
+    task_examid_label = Label(frame_field_tasks,text='examid',font=('bold',12))
+    task_examid_label.pack(side="left")
+    task_examid_entry = Entry(frame_field_tasks, textvariable=task_examid)
+    task_examid_entry.pack(side="left")
     #projectid
     task_projectid = IntVar()
-    task_projectid_label = Label(frame_field2,text='projectid',font=('bold',12))
-    task_projectid_label.grid(row=2,column=0,sticky=E)
-    task_projectid_entry = Entry(frame_field2, textvariable=task_projectid)
-    task_projectid_entry.grid(row=2,column=1,sticky=W)
+    task_projectid_label = Label(frame_field_tasks,text='projectid',font=('bold',12))
+    task_projectid_label.pack(side="left")
+    task_projectid_entry = Entry(frame_field_tasks, textvariable=task_projectid)
+    task_projectid_entry.pack(side="left")
+
+
+    #tasks action buttons
+    frame_tasks_btns = Frame(app)
+    frame_tasks_btns.pack()
+    #add buttons
+    add_tasks_btn = Button(frame_tasks_btns,text='Add Task',width=12,command=add_task)
+    add_tasks_btn.pack(side="left")
+    #remove button
+    remove_tasks_btn = Button(frame_tasks_btns,text='Remove Task',width=12,command=remove_task)
+    remove_tasks_btn.pack(side="left")
+    #update button
+    update_tasks_btn = Button(frame_tasks_btns,text='Update Task',width=12,command=update_task)
+    update_tasks_btn.pack(side="left")
+    #clear button
+    clear_tasks_btn = Button(frame_tasks_btns,text='Clear Input',width=12,command=clear_text)
+    clear_tasks_btn.pack(side="left")
+
 
     #tasks table frame
     frame_tasks = Frame(app)
-    frame_tasks.grid(row=45,column=0,columnspan=4,rowspan=6,pady=20,padx=20)
+    frame_tasks.pack()
+    # frame_tasks.grid(row=45,column=0,columnspan=4,rowspan=6,pady=20,padx=20)
     tasks_columns = ['task_id','task_name','priority','userid','courseid','assignmentid','examid','projectid']
     tasks_tree_view = Treeview(frame_tasks,columns=tasks_columns,show="headings")
     tasks_tree_view.column("task_id",width=30)
@@ -398,62 +439,38 @@ def main():
     scrollbarTasks.pack(side="right",fill="y")
     tasks_tree_view.config(yscrollcommand=scrollbarTasks.set)
 
-    #tasks action buttons
-    frame_tasks_btns = Frame(app)
-    frame_tasks_btns.grid(row=43,column=0)
-    #add buttons
-    add_tasks_btn = Button(frame_tasks_btns,text='Add Task',width=12,command=add_task)
-    add_tasks_btn.grid(row=0,column=0,pady=20)
-    #remove button
-    remove_tasks_btn = Button(frame_tasks_btns,text='Remove Task',width=12,command=remove_task)
-    remove_tasks_btn.grid(row=0,column=1,pady=20)
-    #update button
-    update_tasks_btn = Button(frame_tasks_btns,text='Update Task',width=12,command=update_task)
-    update_tasks_btn.grid(row=0,column=2,pady=20)
-    #clear button
-    clear_tasks_btn = Button(frame_tasks_btns,text='Clear Input',width=12,command=clear_text)
-    clear_tasks_btn.grid(row=0,column=3,pady=20)
-
-
-#--------------------------------------------------------------------------------------------
-
+#-----------------------------------------------------------------------------------
     #fields/attributes for the assignments table
     frame_field3 = Frame(app)
-    frame_field3.grid(row=55,column=0)
+    frame_field3.pack()
     #assignment name
     assignment_text = StringVar()
     assignment_label = Label(frame_field3,text='assignment name',font=('bold',12))
-    assignment_label.grid(row=0,column=0,sticky=E)
+    assignment_label.pack(side="left")
     assignment_entry = Entry(frame_field3, textvariable=assignment_text)
-    assignment_entry.grid(row=0,column=1,sticky=W)
+    assignment_entry.pack(side="left")
     #start date
     assignment_start_text = StringVar()
     assignment_start_label = Label(frame_field3,text='start date',font=('bold',12))
-    assignment_start_label.grid(row=0,column=2,sticky=E)
+    assignment_start_label.pack(side="left")
     assignment_start_entry = Entry(frame_field3, textvariable=assignment_start_text)
-    assignment_start_entry.grid(row=0,column=3,sticky=W)
+    assignment_start_entry.pack(side="left")
     #end date
     assignment_end_text = StringVar()
     assignment_end_label = Label(frame_field3,text='end date',font=('bold',12))
-    assignment_end_label.grid(row=0,column=4,sticky=E)
+    assignment_end_label.pack(side="left")
     assignment_end_entry = Entry(frame_field3, textvariable=assignment_end_text)
-    assignment_end_entry.grid(row=0,column=5,sticky=W)
-    #end date
-    assignment_end_text = StringVar()
-    assignment_end_label = Label(frame_field3,text='end date',font=('bold',12))
-    assignment_end_label.grid(row=0,column=4,sticky=E)
-    assignment_end_entry = Entry(frame_field3, textvariable=assignment_end_text)
-    assignment_end_entry.grid(row=0,column=5,sticky=W)
-    #length
+    assignment_end_entry.pack(side="left")
+#length
     assignment_length_text = IntVar()
     assignment_length_label = Label(frame_field3,text='length',font=('bold',12))
-    assignment_length_label.grid(row=0,column=6,sticky=E)
+    assignment_length_label.pack(side="left")
     assignment_length_entry = Entry(frame_field3, textvariable=assignment_length_text)
-    assignment_length_entry.grid(row=0,column=7,sticky=W)
+    assignment_length_entry.pack(side="left")
 
     #assignments table frame
     frame_assignments = Frame(app)
-    frame_assignments.grid(row=60,column=0,columnspan=5,rowspan=6,pady=20,padx=20)
+    frame_assignments.pack()
     assignments_columns = ['assignment_id','assignment_name','start_date','end_date','integer']
     assignments_tree_view = Treeview(frame_assignments,columns=assignments_columns,show="headings")
     assignments_tree_view.column("assignment_id",width=30)
@@ -467,44 +484,15 @@ def main():
     scrollbarAssignments.pack(side="right",fill="y")
     assignments_tree_view.config(yscrollcommand=scrollbarAssignments.set)
 
-    # #tasks action buttons
-    # frame_tasks_btns = Frame(app)
-    # frame_tasks_btns.grid(row=43,column=0)
-    # #add buttons
-    # add_tasks_btn = Button(frame_tasks_btns,text='Add Task',width=12,command=add_task)
-    # add_tasks_btn.grid(row=0,column=0,pady=20)
-    # #remove button
-    # remove_tasks_btn = Button(frame_tasks_btns,text='Remove Task',width=12,command=remove_task)
-    # remove_tasks_btn.grid(row=0,column=1,pady=20)
-    # #update button
-    # update_tasks_btn = Button(frame_tasks_btns,text='Update Task',width=12,command=update_task)
-    # update_tasks_btn.grid(row=0,column=2,pady=20)
-    # #clear button
-    # clear_tasks_btn = Button(frame_tasks_btns,text='Clear Input',width=12,command=clear_text)
-    # clear_tasks_btn.grid(row=0,column=3,pady=20)
 
-
-
-
-    scrollbarApp = Scrollbar(Listbox(app))
-    scrollbarApp.pack(side=RIGHT,fill=Y)
-    mylist = Listbox(Listbox(app),yscrollcommand=scrollbarApp.set)
-    mylist.pack(side=LEFT,fill=BOTH)
-    scrollbarApp.config(command=mylist.yview)
 
     app.title('Student Planner')
     app.geometry('900x750')
 
-    #Populate data
     populate_users_list()
     populate_tasks_list()
-    # populate_assignments_list()
-    # Start program
-    mainloop()
+    populate_assignments_list()
 
-
-    # db.search_by_query("select * from users where email like '% @chapman.edu'; ")
-    db.search_by_query("select * from users where email like '%.edu'; ")
-
-if __name__ == '__main__':
+    app.mainloop()
+if __name__=='__main__':
     main()
