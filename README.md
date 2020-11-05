@@ -11,8 +11,10 @@ _id and projects.project_name = "random website";
 _id and projects.project_name = "random website" group by users.name;
 - select user_id, name, email from users where email like '%@gmail.com';
 
-#### instructions
+#### instructions/notes
 - went entering a query in the query search bar, you have to take out the semicolon
+- after you enter a query (in the query search bar) it's going to print in the terminal. every else (updating,deleting,insert) will populate in the table
+- when you're updating (after clicking/selecting a row) for integer values please put a 0 (which is a equivalent to a NULL) and for string value enter an empty string (" ")
 
 
 #### references:
