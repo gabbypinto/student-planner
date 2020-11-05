@@ -5,10 +5,11 @@ from sqlite3 import Error
 from tkinter.ttk import Treeview
 
 class Database:
+#creates tables
     def __init__(self, db):
         self.conn = sqlite3.connect(db)
         self.cur = self.conn.cursor()
-        #create users tablle
+        #create users table
         self.cur.execute(""" CREATE TABLE IF NOT EXISTS users (
                                         user_id integer PRIMARY KEY,
                                         name text NOT NULL,
@@ -67,125 +68,138 @@ class Database:
                                         dayTwo text
                                     );""")
         self.conn.commit()
-
+#search by query
     def search_by_query(self, query):
         self.cur.execute(query)
         rows = self.cur.fetchall()
-        print(rows)
+        # print(rows)
         return rows
 
+
+#-------------------------------USERS-------------------------------------------
+#insert a user
     def insert_user(self, name,email):
         self.cur.execute("INSERT INTO users VALUES (NULL, ?, ?)",
                          (name,email))
         self.conn.commit()
-
+#delete a user
     def delete_user(self, user_id):
         self.cur.execute("DELETE FROM users WHERE user_id=?", (user_id,))
         self.conn.commit()
-
+#update a user
     def update_user(self, user_id, name, email):
         self.cur.execute("UPDATE users SET name = ?, email = ? WHERE user_id = ?",
                          (name,email,user_id))
         self.conn.commit()
-#------------------------------------------------------------------------------------
 
+#-------------------------------TASKS--------------------------------------------
+#insert a task
     def insert_task(self, text, priority,userid,courseid,assignmentid,examid,projectid):
         self.cur.execute("INSERT INTO tasks VALUES (NULL, ?, ?, ?, ?, ?, ?,?)",
                          (text, priority,userid,courseid,assignmentid,examid,projectid))
         self.conn.commit()
-
+#delete a task
     def delete_task(self, task_id):
         self.cur.execute("DELETE FROM tasks WHERE task_id=?", (task_id,))
         self.conn.commit()
-
+#update a task
     def update_task(self, task_id,task_name, priority,userid,courseid,assignmentid,examid,projectid):
         self.cur.execute("UPDATE tasks SET task_name = ?, priority = ?, userid = ?, courseid=?,assignmentid = ?, examid = ?, projectid = ? WHERE task_id = ?",
                          (task_name, priority,userid,courseid,assignmentid,examid,projectid,task_id))
         self.conn.commit()
 
-#--------------------------------------------------------------------------------------------------------------
-    #add code here for assignment
+
+#-----------------------------ASSIGNMENTS---------------------------------------
+#insert an assignment
     def insert_assignment(self, assignment_name, start_date,end_date,length):
         self.cur.execute("INSERT INTO assignments VALUES (NULL, ?, ?, ?, ?)",
                             (assignment_name, start_date,end_date,length))
         self.conn.commit()
-
+#delete an assignment
     def delete_assignment(self, assignment_id):
         self.cur.execute("DELETE FROM assignments WHERE assignment_id=?", (assignment_id,))
         self.conn.commit()
-
+#update an assignment
     def update_assignment(self, assignment_id,assignment_name, start_date,end_date,length):
         self.cur.execute("UPDATE assignments SET assignment_name = ?, start_date = ?, end_date = ?, length=? WHERE assignment_id = ?",
                              (assignment_name, start_date,end_date,length,assignment_id,))
         self.conn.commit()
 
-#------------------------------------------------------------------------------------
+#-------------------------------EXAMS--------------------------------------------
+#insert an exam
     def insert_exam(self,exam_name, exam_date,courseid):
         self.cur.execute("INSERT INTO exams VALUES (NULL, ?, ?,?)",
                             (exam_name, exam_date,courseid))
         self.conn.commit()
-
+#delete an exam
     def delete_exam(self, exam_id):
         self.cur.execute("DELETE FROM exams WHERE exam_id=?", (exam_id,))
         self.conn.commit()
-
+#update an exam
     def update_exam(self,exam_id,exam_name, exam_date,courseid):
         self.cur.execute("UPDATE exams SET exam_name = ?, exam_date = ?, courseid=? WHERE exam_id = ?",
                              (exam_name, exam_date,courseid,exam_id))
         self.conn.commit()
 
-#-----------------------------------------------------------------------------------------------------
-
+#-------------------------------PROJECTS-----------------------------------------
+#insert a project
     def insert_project(self, project_name, start_date,end_date,length,courseid):
         self.cur.execute("INSERT INTO projects VALUES (NULL,?,?,?,?,?)",
                             (project_name, start_date,end_date,length,courseid))
         self.conn.commit()
-
+#delete a project
     def delete_project(self, project_id):
         self.cur.execute("DELETE FROM projects WHERE project_id=?", (project_id,))
         self.conn.commit()
-
+#update a project
     def update_project(self,project_id,project_name, start_date,end_date,length,courseid):
         self.cur.execute("UPDATE projects SET project_name = ?, start_date = ?, end_date=?, length=?,courseid=? WHERE project_id = ?",
                              (project_name, start_date,end_date,length,courseid,project_id))
         self.conn.commit()
 
-#-------------------------------------------------------------------------------------------------
-
+#--------------------------------COURSES----------------------------------------
+#insert a course
     def insert_courses(self, course_name, major,start_time,end_time,length,dayOne,dayTwo):
         self.cur.execute("INSERT INTO courses VALUES (NULL,?,?,?,?,?,?,?)",
                             (course_name,major,start_time,end_time,length,dayOne,dayTwo))
         self.conn.commit()
-
+#delete a course
     def delete_course(self, course_id):
         self.cur.execute("DELETE FROM courses WHERE course_id=?", (course_id,))
         self.conn.commit()
-
+#update a couse
     def update_course(self, course_id,course_name, major,start_time,end_time,length,dayOne,dayTwo):
         self.cur.execute("UPDATE courses SET course_name = ?, major=?, start_time=?,end_time=?,length=?,dayOne=?,dayTwo=? WHERE course_id = ?",
                              (course_name, major,start_time,end_time,length,dayOne,dayTwo,course_id))
         self.conn.commit()
 
-
+#-------------------------------------------------------------------------------
+#close connection
     def __del__(self):
         self.conn.close()
 
-
+#-------------------------------------------------------------------------------
 def main():
     # database = r"/Users/gabbypinto/Desktop/student-planner-db/pinto_schema.db"
     database = "pinto_schema.db"
-    # create a database connection
+    # create a database connection and the tables
     db =  Database(database)
+
+#---------------------------users----------------------------------------------
     #populate the entire users table
     def populate_users_list(query='select * from users'):
         for i in users_tree_view.get_children():
             users_tree_view.delete(i)
         for row in db.search_by_query(query):
             users_tree_view.insert('','end',values=row)
+
+    def printList(query):
+        for row in db.search_by_query(query):
+            print(row)
     #add a user
     def add_user():
         if username_text.get() == '' or email_text.get() == '':
-            messagebox.showerror('Required Fields','Please include all fields')
+            print('Required Fields','Please include all fields')
             return
         db.insert_user(username_text.get(),email_text.get())
         clear_text()
@@ -216,10 +230,18 @@ def main():
         username_entry.delete(0,END)
         email_entry.delete(0,END)
     #execute the query which calls the first fxn (populate list 2)...execute_query
+    #CHANGE THIS SO IT PRINTS TO THE TERMINAL
     def execute_query():
+        print()
+        print()
+        print()
+        print("-------------QUERY SEARCH----------------")
         query = query_search.get()
-        populate_users_list(query)
+        printList(query)
+        print("-----------------END---------------------")
+        print()
 
+#---------------------------tasks----------------------------------------------
 
     #populate tasks list
     def populate_tasks_list(query='select * from tasks'):
@@ -229,10 +251,29 @@ def main():
             tasks_tree_view.insert('','end',values=row)
     #add a task
     def add_task():
-        if task_text.get() == '' or task_priority.get() == '' or task_userid.get() == '' or task_assignmentid.get() == '' or task_examid.get() == '' or task_projectid.get() == '':
-            messagebox.showerror('Required Fields','Please include all fields')
+        localTaskPriority = task_priority.get()
+        localTaskUserId = task_userid.get()
+        localTaskCourseId = task_courseid.get()
+        localTaskAssignmentId = task_assignmentid.get()
+        localTaskExamId = task_examid.get()
+        localTaskProjectId = task_projectid.get()
+        if task_text.get() == '':
+            print('Task Name is required, please include it')
             return
-        db.insert_task(task_text.get(), task_priority.get(),task_userid.get(),task_courseid.get(),task_assignmentid.get(),task_examid.get(),task_projectid.get())
+        if task_priority.get() == 0:
+            print("here")
+            localTaskPriority = None
+        if localTaskUserId == 0:
+            localTaskUserId = None
+        if task_courseid.get() == 0:
+            localTaskCourseId = None
+        if task_assignmentid.get() == 0:
+            localTaskAssignmentId = None
+        if task_examid.get() == 0:
+            localTaskExamId = None
+        if task_projectid.get() == 0:
+            localTaskProjectId =  None
+        db.insert_task(task_text.get(), localTaskPriority,localTaskUserId,localTaskCourseId,localTaskAssignmentId,localTaskExamId,localTaskProjectId)
         clear_text()
         populate_tasks_list()
     #select a task
@@ -262,7 +303,28 @@ def main():
         populate_tasks_list()
     #update a task
     def update_task():
-        db.update_task(selected_task[0],task_text.get(), task_priority.get(),task_userid.get(),task_courseid.get(),task_assignmentid.get(),task_examid.get(),task_projectid.get())
+        localTaskPriority = task_priority.get()
+        localTaskUserId = task_userid.get()
+        localTaskCourseId = task_courseid.get()
+        localTaskAssignmentId = task_assignmentid.get()
+        localTaskExamId = task_examid.get()
+        localTaskProjectId = task_projectid.get()
+        if task_text.get() == '':
+            print('Task Name is required, please include it')
+            return
+        if task_priority.get() == 0:
+            localTaskPriority = None
+        if localTaskUserId == 0:
+            localTaskUserId = None
+        if task_courseid.get() == 0:
+            localTaskCourseId = None
+        if task_assignmentid.get() == 0:
+            localTaskAssignmentId = None
+        if task_examid.get() == 0:
+            localTaskExamId = None
+        if task_projectid.get() == 0:
+            localTaskProjectId =  None
+        db.update_task(selected_task[0],task_text.get(),localTaskPriority,localTaskUserId,localTaskCourseId,localTaskAssignmentId,localTaskExamId,localTaskProjectId)
         populate_tasks_list()
     #clear text when user is deleted
     def clear_tasks_text():
@@ -274,12 +336,11 @@ def main():
         task_examid_entry.delete(0,END)
         task_projectid_entry.delete(0,END)
 
-#----------------------------------------------------------------------------------------------------------------
-
+#-----------------------------assignments--------------------------------------
     #add an assignment
     def add_assignment():
         if assignment_text.get() == '' or assignment_start_text.get() == '' or assignment_end_text.get() == '' or assignment_length_text.get() == '':
-            messagebox.showerror('Required Fields','Please include all fields')
+            tkinter.messagebox.showerror('Required Fields','Please include all fields')
             return
         db.insert_assignment(assignment_text.get(),assignment_start_text.get(),assignment_end_text.get(),assignment_length_text.get())
         clear_text()
@@ -316,14 +377,14 @@ def main():
         assignment_start_entry.delete(0,END)
         assignment_end_entry.delete(0,END)
         assignment_length_entry.delete(0,END)
-
+    #populate assignments table
     def populate_assignments_list(query='select * from assignments'):
         for i in assignments_tree_view.get_children():
             assignments_tree_view.delete(i)
         for row in db.search_by_query(query):
             assignments_tree_view.insert('','end',values=row)
 
-
+#---------------------------exams----------------------------------------------
     #add exam
     def add_exam():
         if exam_text.get() == '' or exam_date_text.get() == '' or courseid_text.get() == '':
@@ -360,16 +421,14 @@ def main():
         exam_entry.delete(0,END)
         exam_date_entry.delete(0,END)
         courseid_entry.delete(0,END)
-    #populate exams
+    #populate exams tabls
     def populate_exams_list(query='select * from exams'):
         for i in exams_tree_view.get_children():
             exams_tree_view.delete(i)
         for row in db.search_by_query(query):
             exams_tree_view.insert('','end',values=row)
 
-#---------------------------------------------------
-#projects
-
+#-------------------------projects----------------------------------------------
     #add project
     def add_project():
         if project_text.get() == '' or project_start_date_text.get() == '' or project_end_date_text.get() == '' or project_length_text.get() == '' or project_courseid_text.get()=='':
@@ -378,7 +437,7 @@ def main():
         db.insert_project(project_text.get(),project_start_date_text.get(),project_end_date_text.get(),project_length_text.get(),project_courseid_text.get())
         clear_projects_text()
         populate_projects_list()
-    #select a select
+    #select a project
     def select_project(event):
         try:
             global selected_project
@@ -393,45 +452,42 @@ def main():
             project_length_entry.delete(0,END)
             project_length_entry.insert(END,selected_project[4])
             project_courseid_entry.delete(0,END)
-            project_courseid_entry.insert(END,selected_project[4])
+            project_courseid_entry.insert(END,selected_project[5])
         except IndexError:
             pass
-    #remove exam
+    #remove project
     def remove_project():
         db.delete_project(selected_project[0])
         clear_projects_text()
         populate_projects_list()
-    #update exam
+    #update project
     def update_project():
         db.update_project(selected_project[0],project_text.get(),project_start_date_text.get(),project_end_date_text.get(),project_length_text.get(),project_courseid_text.get())
         populate_projects_list()
-    #clear text when user is deleted
+    #clear input text for projects
     def clear_projects_text():
         project_entry.delete(0,END)
         project_start_date_entry.delete(0,END)
         project_end_date_entry.delete(0,END)
         project_length_entry.delete(0,END)
         project_courseid_entry.delete(0,END)
-    #populate exams
+    #populate projects table
     def populate_projects_list(query='select * from projects'):
         for i in projects_tree_view.get_children():
             projects_tree_view.delete(i)
         for row in db.search_by_query(query):
             projects_tree_view.insert('','end',values=row)
 
-
-#---------------------------------------------------
-#courses
-
+#-------------------------courses--------------------------
     #add course
     def add_course():
-        if course_text.get() == '' or course_major_text.get() == '' or course_start_time_text.get() == '' or course_end_time_text.get() == '' or course_length_text.get()=='' or course_dayOne_text.get() == '' or course_dayTwo_text.get() == '':
+        if course_text.get() == '' or course_major_text.get() == '' or course_start_time_text.get() == '' or course_end_time_text.get() == '' or course_length_text.get()=='' or course_dayOne_text.get() == '':
             messagebox.showerror('Required Fields','Please include all fields')
             return
         db.insert_courses(course_text.get(),course_major_text.get(),course_start_time_text.get(),course_end_time_text.get(),course_length_text.get(),course_dayOne_text.get(),course_dayTwo_text.get())
         clear_courses_text()
         populate_courses_list()
-    #select a select
+    #select a course
     def select_course(event):
         try:
             global selected_course
@@ -454,16 +510,16 @@ def main():
 
         except IndexError:
             pass
-    #remove exam
+    #remove course
     def remove_course():
         db.delete_course(selected_course[0])
         clear_courses_text()
         populate_courses_list()
-    #update exam
+    #update course
     def update_course():
         db.update_course(selected_course[0],course_text.get(),course_major_text.get(),course_start_time_text.get(),course_end_time_text.get(),course_length_text.get(),course_dayOne_text.get(),course_dayTwo_text.get())
         populate_courses_list()
-    #clear text when user is deleted
+    #clear input text for courses
     def clear_courses_text():
         course_entry.delete(0,END)
         course_major_entry.delete(0,END)
@@ -472,47 +528,39 @@ def main():
         course_length_entry.delete(0,END)
         course_dayOne_entry.delete(0,END)
         course_dayTwo_entry.delete(0,END)
-
-
-    #populate exams
+    #populate courses table
     def populate_courses_list(query='select * from courses'):
         for i in courses_tree_view.get_children():
             courses_tree_view.delete(i)
         for row in db.search_by_query(query):
             courses_tree_view.insert('','end',values=row)
 
-
+#------------------------ui---------------------------------------------------
     app = Tk()
     #main frame
     main_frame  = Frame(app)
     main_frame.pack(fill=BOTH,expand=1)
-
     #create canvas
     my_canvas= Canvas(main_frame)
     my_canvas.pack(side=LEFT,fill=BOTH,expand=1)
-
     #add scrollbar
     my_scrollbar=ttk.Scrollbar(main_frame,orient=VERTICAL,command=my_canvas.yview)
     my_scrollbar.pack(side=RIGHT,fill=Y)
-
     #configure the Canvas
     my_canvas.configure(yscrollcommand=my_scrollbar.set)
     my_canvas.bind('<Configure>',lambda e:my_canvas.configure(scrollregion=my_canvas.bbox("all")))
-
     #create another frame in Canvas
     second_frame = Frame(my_canvas)
     my_canvas.create_window((0,0),window=second_frame,anchor="nw")
     my_canvas.create_window(0,0,window=second_frame)
 
 
-    # for thing in range(100):
-        # Button(second_frame,text=f'Button{thing} Yo!').grid(row=thing,column=0)
-
     lbl_search = Label(second_frame,text='Search by query',font=('bold',12),pady=20)
     lbl_search.pack(side="left")
     query_search = StringVar()
     query_search_entry= Entry(second_frame,textvariable=query_search,width=40)
     query_search_entry.pack(side="left")
+
     #search button
     search_query_btn = Button(second_frame,text='Search Query',width=12,command=execute_query)
     search_query_btn.pack(side="left")
@@ -617,7 +665,6 @@ def main():
     task_projectid_label.pack(side="left")
     task_projectid_entry = Entry(seven_frame, textvariable=task_projectid)
     task_projectid_entry.pack(side="left")
-
 
     #tasks action buttons
     eight_frame = Frame(my_canvas)
@@ -921,7 +968,7 @@ def main():
     courses_tree_view.config(yscrollcommand=scrollbarCourses.set)
 
     app.title('Student Planner')
-    app.geometry('1000x800')
+    app.geometry('2000x800')
 
     populate_users_list()
     populate_tasks_list()
